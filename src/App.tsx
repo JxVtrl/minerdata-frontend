@@ -1,35 +1,52 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+// Definimos o tipo dos dados esperados para progresso
+interface ProgressPayload {
+  percent: number;
 }
 
-export default App
+// Definimos o tipo para a mensagem final
+interface DonePayload {
+  message: string;
+}
+
+// Criamos o socket fora do componente para manter a conexão durante o ciclo de vida
+const socket: Socket = io(import.meta.env.VITE_BACKEND_URL);
+
+function App() {
+  // Estado para guardar o progresso do crawler
+  const [progress, setProgress] = useState<number>(0);
+  const [message, setMessage] = useState<string>('');
+
+  useEffect(() => {
+    // Envia ao backend o comando para iniciar o crawler
+    socket.emit('start-crawler');
+
+    // Escuta o progresso do backend
+    socket.on('progress', (data: ProgressPayload) => {
+      setProgress(data.percent); // Atualiza o progresso na tela
+    });
+
+    // Escuta a mensagem final de conclusão
+    socket.on('done', (data: DonePayload) => {
+      setMessage(data.message); // Mostra a mensagem final
+    });
+
+    // Limpa os listeners ao desmontar o componente
+    return () => {
+      socket.off('progress');
+      socket.off('done');
+    };
+  }, []);
+
+  return (
+    <div style={{ padding: '2rem', fontFamily: 'Arial' }}>
+      <h1>MinerData - Progresso do Crawler</h1>
+      <p>Progresso: {progress}%</p>
+      {message && <p><strong>{message}</strong></p>}
+    </div>
+  );
+}
+
+export default App;
