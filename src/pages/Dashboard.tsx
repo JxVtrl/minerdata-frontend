@@ -1,20 +1,10 @@
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import CrawlerControl from '../components/CrawlerControl';
 
 export default function Dashboard() {
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
-
-    const handleLogout = () => {
-        logout();
-        navigate('/');
-    };
-
     return (
-        <div style={{ padding: '2rem' }}>
-            <h2>Bem-vindo, {user?.username}</h2>
-            <p>Você está autenticado.</p>
-            <button onClick={handleLogout}>Sair</button>
+        <div className="min-h-screen bg-gray-100 p-8">
+            <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+            <CrawlerControl />
         </div>
     );
 }
