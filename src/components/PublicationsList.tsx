@@ -19,6 +19,7 @@ const PublicationsList = forwardRef<PublicationsListRef>((props, ref) => {
     const [publications, setPublications] = useState<Publication[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [expandedPublications, setExpandedPublications] = useState<Set<number>>(new Set());
 
     const fetchPublications = async () => {
         try {
@@ -49,6 +50,21 @@ const PublicationsList = forwardRef<PublicationsListRef>((props, ref) => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const toggleExpansion = (publicationId: number) => {
+        const newExpanded = new Set(expandedPublications);
+        if (newExpanded.has(publicationId)) {
+            newExpanded.delete(publicationId);
+        } else {
+            newExpanded.add(publicationId);
+        }
+        setExpandedPublications(newExpanded);
+    };
+
+    const truncateText = (text: string, maxLength: number = 200) => {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
     };
 
     if (isLoading) {
@@ -120,43 +136,96 @@ const PublicationsList = forwardRef<PublicationsListRef>((props, ref) => {
 
             {/* Publications Grid */}
             <div className="grid gap-6">
-                {publications.map((publication) => (
-                    <div
-                        key={publication.id}
-                        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
-                    >
-                        <div className="flex justify-between items-start mb-4">
-                            <h3 className="text-lg font-semibold text-gray-900 pr-4">
-                                {publication.title}
-                            </h3>
-                            {publication.source && (
-                                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap">
-                                    {publication.source}
+                {publications.map((publication) => {
+                    const isExpanded = expandedPublications.has(publication.id);
+                    const shouldTruncate = publication.content.length > 200;
+
+                    return (
+                        <div
+                            key={publication.id}
+                            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-lg font-semibold text-gray-900 pr-4">
+                                    {publication.title}
+                                </h3>
+                                {publication.source && (
+                                    <span className="bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap">
+                                        {publication.source}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="mb-4">
+                                <p className="text-gray-600 text-sm leading-relaxed">
+                                    {isExpanded ? publication.content : truncateText(publication.content)}
+                                </p>
+
+                                {shouldTruncate && (
+                                    <button
+                                        onClick={() => toggleExpansion(publication.id)}
+                                        className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline"
+                                    >
+                                        {isExpanded ? 'Ver menos' : 'Ler mais'}
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Informações expandidas */}
+                            {isExpanded && (
+                                <div className="bg-gray-50 rounded-lg p-4 mb-4 border-l-4 border-blue-500">
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                                        Contexto e Detalhes
+                                    </h4>
+                                    <div className="space-y-2 text-sm text-gray-600">
+                                        {publication.published_at && (
+                                            <div>
+                                                <span className="font-medium">Publicado originalmente em:</span> {formatDate(publication.published_at)}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <span className="font-medium">Coletado em:</span> {formatDate(publication.created_at)}
+                                        </div>
+                                        {publication.source && (
+                                            <div>
+                                                <span className="font-medium">Fonte:</span> {publication.source}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <span className="font-medium">Tamanho do conteúdo:</span> {publication.content.length} caracteres
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex justify-between items-center text-xs text-gray-500 border-t pt-4">
+                                <span>
+                                    Coletado em: {formatDate(publication.created_at)}
                                 </span>
-                            )}
+                                <div className="flex items-center space-x-3">
+                                    {shouldTruncate && (
+                                        <button
+                                            onClick={() => toggleExpansion(publication.id)}
+                                            className="text-gray-600 hover:text-gray-800 font-medium hover:underline"
+                                        >
+                                            {isExpanded ? 'Ocultar detalhes' : 'Ver detalhes'}
+                                        </button>
+                                    )}
+                                    {publication.link && (
+                                        <a
+                                            href={publication.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                                        >
+                                            Ver fonte →
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-
-                        <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                            {publication.content}
-                        </p>
-
-                        <div className="flex justify-between items-center text-xs text-gray-500 border-t pt-4">
-                            <span>
-                                Coletado em: {formatDate(publication.created_at)}
-                            </span>
-                            {publication.link && (
-                                <a
-                                    href={publication.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
-                                >
-                                    Ver fonte →
-                                </a>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
