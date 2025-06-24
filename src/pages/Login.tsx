@@ -1,23 +1,32 @@
 import { useState } from 'react';
 import { login } from '../api/auth';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { user, loading } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const token = await login(username, password);
-            localStorage.setItem('token', token); // salva o token localmente
-            navigate('/dashboard'); // redireciona para a área protegida
+            localStorage.setItem('token', token);
+            navigate('/dashboard');
         } catch (err) {
             setError('Usuário ou senha inválidos');
         }
     };
+
+    // Se já estiver logado, redireciona automaticamente
+    if (loading) return <p>Carregando...</p>;
+    if (user) {
+        navigate('/dashboard');
+        return null;
+    }
 
     return (
         <form onSubmit={handleLogin} style={{ padding: '2rem' }}>
