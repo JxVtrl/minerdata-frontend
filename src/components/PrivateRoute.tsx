@@ -1,16 +1,30 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { toast } from 'react-toastify';
 
-interface PrivateRouteProps {
-    children: React.ReactNode;
-}
+export default function PrivateRoute({ children }: { children: React.ReactNode }) {
+    const token = localStorage.getItem('token');
 
-export default function PrivateRoute({ children }: PrivateRouteProps) {
-    const { user, loading } = useAuth();
+    if (!token) {
+        toast.error('Sessão expirada. Faça login novamente.');
+        return <Navigate to="/login" />;
+    }
 
-    if (loading) return <p>Carregando...</p>;
+    // Verifica expiração se o token for JWT
+    try {
+        const [, payloadBase64] = token.split('.');
+        const payload = JSON.parse(atob(payloadBase64));
+        const isExpired = payload.exp * 1000 < Date.now();
 
-    if (!user) return <Navigate to="/" replace />;
+        if (isExpired) {
+            toast.error('Sessão expirada. Faça login novamente.');
+            localStorage.removeItem('token');
+            return <Navigate to="/login" />;
+        }
+    } catch (err) {
+        toast.error('Erro ao validar sessão. Faça login novamente.');
+        localStorage.removeItem('token');
+        return <Navigate to="/login" />;
+    }
 
     return children;
 }

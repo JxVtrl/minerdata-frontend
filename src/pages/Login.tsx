@@ -8,23 +8,23 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const { user, loading } = useAuth();
+    const { user, isLoading } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const token = await login(username, password);
             localStorage.setItem('token', token);
-            navigate('/dashboard');
+            navigate('/');
         } catch (err) {
             setError('Usuário ou senha inválidos');
         }
     };
 
     // Se já estiver logado, redireciona automaticamente
-    if (loading) return <p>Carregando...</p>;
+    if (isLoading) return <p>Carregando...</p>;
     if (user) {
-        navigate('/dashboard');
+        navigate('/');
         return null;
     }
 

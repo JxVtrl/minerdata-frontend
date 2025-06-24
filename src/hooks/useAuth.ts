@@ -1,43 +1,41 @@
 import { useEffect, useState } from 'react';
+import api from '../services/api';
 
-interface User {
+type AuthResponse = {
     id: number;
-    username: string;
-}
+    name: string;
+    email: string;
+};
 
 export function useAuth() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<AuthResponse | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setLoading(false);
-            return;
-        }
+        const verifyToken = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setIsLoading(false);
+                return;
+            }
 
-        fetch('http://localhost:3001/verify', {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
-            .then((res) => {
-                if (!res.ok) throw new Error('Token inválido');
-                return res.json();
-            })
-            .then((data) => {
-                setUser(data.user);
-            })
-            .catch(() => {
+            try {
+                const res = await api.get('/verify');
+                setUser(res.data);
+            } catch (err) {
                 localStorage.removeItem('token');
-            })
-            .finally(() => setLoading(false));
+                setUser(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        verifyToken();
     }, []);
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        setUser(null);
+    return {
+        user,
+        isLoading,
+        isAuthenticated: !!user,
     };
-
-    return { user, loading, logout };
 }
