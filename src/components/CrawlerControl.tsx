@@ -37,7 +37,6 @@ export default function CrawlerControl({ onCrawlerComplete }: CrawlerControlProp
         setError('');
 
         try {
-            console.log('Iniciando crawler...');
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/crawler/run`, {
                 method: 'POST',
                 headers: {
@@ -45,14 +44,11 @@ export default function CrawlerControl({ onCrawlerComplete }: CrawlerControlProp
                 },
             });
 
-            console.log('Response status:', response.status);
-
             if (!response.ok) {
                 throw new Error(`Erro ${response.status}: ${response.statusText}`);
             }
 
-            const data = await response.json();
-            console.log('Crawler iniciado:', data);
+            await response.json();
         } catch (err) {
             console.error('Erro ao iniciar crawler:', err);
             setError(err instanceof Error ? err.message : 'Erro desconhecido');

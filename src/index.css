@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import do react-toastify */
+@import 'react-toastify/dist/ReactToastify.css';
+
 /* CSS básico - Tailwind CSS está sendo carregado via CDN */
 body {
     margin: 0;

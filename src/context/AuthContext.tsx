@@ -5,13 +5,16 @@ type User = {
     id: number;
     name: string;
     email: string;
+    role: 'admin' | 'user';
 };
 
 type AuthContextType = {
     user: User | null;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    register: (name: string, email: string, password: string) => Promise<void>;
     logout: () => void;
+    isAdmin: boolean;
 };
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +22,8 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
         const verify = async () => {
@@ -29,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             try {
-                const res = await api.get('/verify');
+                const res = await api.get('/auth/verify');
                 setUser(res.data);
             } catch (err) {
                 localStorage.removeItem('token');
@@ -45,7 +50,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = async (email: string, password: string) => {
         const res = await api.post('/auth/login', { email, password });
         localStorage.setItem('token', res.data.token);
-        setUser(await api.get('/auth/verify').then(r => r.data));
+        const userData = await api.get('/auth/verify').then(r => r.data);
+        setUser(userData);
+    };
+
+    const register = async (name: string, email: string, password: string) => {
+        const res = await api.post('/auth/register', { name, email, password });
+        localStorage.setItem('token', res.data.token);
+        setUser(res.data.user);
     };
 
     const logout = () => {
@@ -54,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ user, isLoading, login, register, logout, isAdmin }}>
             {children}
         </AuthContext.Provider>
     );

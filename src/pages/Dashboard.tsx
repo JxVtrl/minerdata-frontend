@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
+import Navigation from '../components/Navigation';
 import CrawlerControl from '../components/CrawlerControl';
 import PublicationsList from '../components/PublicationsList';
 import type { PublicationsListRef } from '../components/PublicationsList';
@@ -15,6 +16,8 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gray-100">
+            <Navigation />
+
             {/* Header */}
             <div className="bg-white shadow-sm border-b">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
